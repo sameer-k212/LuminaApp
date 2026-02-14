@@ -18,10 +18,12 @@ export default function CourseView() {
   const toast = useToast();
 
   useEffect(() => {
-    api.get(`/courses/${id}`).then(res => {
-      setCourse(res.data);
-      setEditData(res.data);
-    }).catch(err => console.error('Error loading course:', err));
+    api.get(`/courses/${id}`)
+      .then(res => {
+        setCourse(res.data);
+        setEditData(res.data);
+      })
+      .catch(() => {});
   }, [id]);
 
   const addSubheading = (chIdx) => {
@@ -62,45 +64,30 @@ export default function CourseView() {
 
   const removeImage = async (chIdx, subIdx, imageUrl) => {
     if (!imageUrl) return;
-    
     try {
       if (imageUrl.includes('cloudinary.com')) {
         await api.delete('/delete-image', { data: { url: imageUrl } });
-        console.log('Image deleted from Cloudinary');
       }
       updateSubheading(chIdx, subIdx, 'image', '');
     } catch (error) {
-      console.error('Delete error:', error);
       updateSubheading(chIdx, subIdx, 'image', '');
     }
   };
 
   const uploadImage = async (chIdx, subIdx, file) => {
-    if (!file) {
-      alert('No file selected');
-      return;
-    }
-    
+    if (!file) return;
     setUploading(true);
-    console.log('Uploading file:', file.name, file.type, file.size);
-    
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
-      console.log('Sending to server...');
       const res = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      console.log('Upload response:', res.data);
       updateSubheading(chIdx, subIdx, 'image', res.data.url);
       setImageCache({ ...imageCache, [`${chIdx}-${subIdx}`]: res.data.url });
       setUploading(false);
       toast('Image uploaded! Now click Save.', 'success');
     } catch (error) {
-      console.error('Upload error:', error);
-      console.error('Error response:', error.response);
       setUploading(false);
       toast('Failed to upload: ' + (error.response?.data?.message || error.message), 'error');
     }
@@ -112,15 +99,12 @@ export default function CourseView() {
       return;
     }
     try {
-      console.log('Saving course data:', editData);
       const res = await api.put(`/courses/${id}`, editData);
-      console.log('Save response:', res.data);
       setCourse(res.data);
       setEditData(res.data);
       setEditMode(false);
       toast('Changes saved successfully!', 'success');
     } catch (error) {
-      console.error('Save error:', error);
       toast('Failed to save: ' + (error.response?.data?.message || error.message), 'error');
     }
   };
@@ -282,10 +266,7 @@ export default function CourseView() {
                     alt={sub.title || 'Course image'} 
                     className="max-w-full rounded-lg my-4 shadow-sm transition-opacity duration-300" 
                     loading="lazy"
-                    onError={(e) => {
-                      console.error('Image load error:', sub.image);
-                      e.target.style.display = 'none';
-                    }} 
+                    onError={(e) => e.target.style.display = 'none'} 
                   />
                 )}
                 {editMode && (

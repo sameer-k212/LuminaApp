@@ -3,9 +3,19 @@ import api from '../api';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/users').then(res => setUsers(res.data));
+    api.get('/users')
+      .then(res => {
+        setUsers(Array.isArray(res.data) ? res.data : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
   const deleteUser = async (id) => {
@@ -18,7 +28,11 @@ export default function Users() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 mt-16">
       <h1 className="text-3xl font-bold mb-8">User Management</h1>
-      {users.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-16 text-gray-500">Loading...</div>
+      ) : error ? (
+        <div className="text-center py-16 text-red-500">Error: {error}</div>
+      ) : users.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <p>No users registered yet.</p>
         </div>

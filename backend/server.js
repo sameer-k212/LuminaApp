@@ -27,12 +27,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-console.log('Cloudinary configured:', {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing',
-  api_secret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing'
-});
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -140,13 +134,9 @@ app.post('/api/courses', authMiddleware, adminMiddleware, async (req, res) => {
 
 app.put('/api/courses/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    console.log('Updating course:', req.params.id);
-    console.log('Data:', JSON.stringify(req.body, null, 2));
     const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, returnDocument: 'after' });
-    console.log('Course updated successfully');
     res.json(course);
   } catch (error) {
-    console.error('Update error:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -158,46 +148,22 @@ app.delete('/api/courses/:id', authMiddleware, adminMiddleware, async (req, res)
 
 app.post('/api/upload', authMiddleware, adminMiddleware, upload.single('image'), async (req, res) => {
   try {
-    console.log('Upload request received');
-    console.log('File:', req.file ? 'Yes' : 'No');
-    console.log('User:', req.user);
-    
     if (!req.file) {
-      console.log('No file in request');
       return res.status(400).json({ message: 'No file uploaded' });
     }
     
-    console.log('File details:', {
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size
-    });
-    
-    console.log('Cloudinary config:', {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not set',
-      api_secret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not set'
-    });
-    
-    console.log('Uploading to Cloudinary...');
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: 'my-courses' },
         (error, result) => {
-          if (error) {
-            console.error('Cloudinary error:', error);
-            reject(error);
-          } else {
-            console.log('Upload successful:', result.secure_url);
-            resolve(result);
-          }
+          if (error) reject(error);
+          else resolve(result);
         }
       );
       uploadStream.end(req.file.buffer);
     });
     res.json({ url: result.secure_url, publicId: result.public_id });
   } catch (error) {
-    console.error('Upload error:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -213,19 +179,20 @@ app.delete('/api/delete-image', authMiddleware, adminMiddleware, async (req, res
     const filename = parts[parts.length - 1].split('.')[0];
     const publicId = `my-courses/${filename}`;
     
-    console.log('Deleting from Cloudinary:', publicId);
     await cloudinary.uploader.destroy(publicId);
-    console.log('Image deleted successfully');
     res.json({ message: 'Image deleted' });
   } catch (error) {
-    console.error('Delete error:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
-  const users = await User.find({ role: 'user' }).select('-password');
-  res.json(users);
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 app.delete('/api/users/:id', authMiddleware, adminMiddleware, async (req, res) => {

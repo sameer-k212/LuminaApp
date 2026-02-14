@@ -4,10 +4,20 @@ import api from '../api';
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const role = localStorage.getItem('role');
 
   useEffect(() => {
-    api.get('/courses').then(res => setCourses(res.data));
+    api.get('/courses')
+      .then(res => {
+        setCourses(Array.isArray(res.data) ? res.data : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        setCourses([]);
+        setLoading(false);
+      });
   }, []);
 
   const deleteCourse = async (id) => {
@@ -27,7 +37,9 @@ export default function Courses() {
           </Link>
         )}
       </div>
-      {courses.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-16 text-gray-500">Loading...</div>
+      ) : courses.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <p className="mb-4">No courses yet. Create your first course!</p>
           <Link to="/create" className="text-blue-600 dark:text-blue-400 hover:underline">+ Create Course</Link>
