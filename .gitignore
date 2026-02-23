@@ -1,6 +1,8 @@
 node_modules
 .env
+.env.local
 dist
-.vercel
+.netlify
 *.log
 .DS_Store
+build

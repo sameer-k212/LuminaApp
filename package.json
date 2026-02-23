@@ -1,8 +1,0 @@
-{
-  "name": "lumina-app",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "vercel-build": "cd frontend && npm install && npm run build && cd .. && cd backend && npm install"
-  }
-}
