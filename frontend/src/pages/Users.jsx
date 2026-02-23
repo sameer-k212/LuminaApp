@@ -7,9 +7,10 @@ export default function Users() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/users')
-      .then(res => {
-        setUsers(Array.isArray(res.data) ? res.data : []);
+    api('/users')
+      .then(res => res.json())
+      .then(data => {
+        setUsers(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -19,10 +20,8 @@ export default function Users() {
   }, []);
 
   const deleteUser = async (id) => {
-    if (confirm('Delete this user?')) {
-      await api.delete(`/users/${id}`);
-      setUsers(users.filter(u => u._id !== id));
-    }
+    await api(`/users/${id}`, { method: 'DELETE' });
+    setUsers(users.filter(u => u._id !== id));
   };
 
   return (

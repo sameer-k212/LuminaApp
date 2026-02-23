@@ -1,25 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
-  const [loginType, setLoginType] = useState('user'); // 'user' or 'admin'
+  const [loginType, setLoginType] = useState('user');
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [secret, setSecret] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      // Hardcoded admin login
       if (loginType === 'admin') {
         if (username === 'admin' && password === 'admin123') {
-          const token = 'hardcoded-admin-token';
-          localStorage.setItem('token', token);
+          localStorage.setItem('token', 'hardcoded-admin-token');
           localStorage.setItem('role', 'admin');
           localStorage.setItem('username', 'admin');
           onLogin();
@@ -30,23 +26,29 @@ export default function Login({ onLogin }) {
         return;
       }
       
-      // User login/register
       const endpoint = isRegister ? '/api/register' : '/api/login';
-      const res = await axios.post(`http://localhost:5000${endpoint}`, { username, password });
+      const res = await fetch(`http://localhost:5000${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.message);
       
       if (isRegister) {
         setIsRegister(false);
         setPassword('');
         alert('Registration successful! Please login.');
       } else {
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('role', res.data.role);
-        localStorage.setItem('username', res.data.username);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+        localStorage.setItem('username', data.username);
         onLogin();
         navigate('/courses');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError(err.message || 'An error occurred');
     }
   };
 

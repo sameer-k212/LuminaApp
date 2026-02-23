@@ -42,12 +42,13 @@ export default function CreateCourse() {
   const uploadImage = async (chIdx, subIdx, file) => {
     const formData = new FormData();
     formData.append('image', file);
-    const res = await api.post('/upload', formData);
-    updateSubheading(chIdx, subIdx, 'image', res.data.url);
+    const res = await api('/upload', { method: 'POST', body: formData, headers: {} });
+    const data = await res.json();
+    updateSubheading(chIdx, subIdx, 'image', data.url);
   };
 
   const saveCourse = async () => {
-    await api.post('/courses', { title, chapters });
+    await api('/courses', { method: 'POST', body: JSON.stringify({ title, chapters }) });
     navigate('/courses');
   };
 
