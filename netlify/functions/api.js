@@ -82,7 +82,7 @@ const adminMiddleware = (req, res, next) => {
   next();
 };
 
-app.post('/api/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   const { username, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = new User({ username, password: hashedPassword, role: 'user' });
@@ -90,7 +90,7 @@ app.post('/api/register', async (req, res) => {
   res.json({ message: 'User registered' });
 });
 
-app.post('/api/create-admin', async (req, res) => {
+app.post('/create-admin', async (req, res) => {
   const { username, password, secret } = req.body;
   if (secret !== 'admin123') return res.status(403).json({ message: 'Invalid secret' });
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -99,7 +99,7 @@ app.post('/api/create-admin', async (req, res) => {
   res.json({ message: 'Admin created' });
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
   if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -109,23 +109,23 @@ app.post('/api/login', async (req, res) => {
   res.json({ token, role: user.role, username: user.username });
 });
 
-app.get('/api/courses', authMiddleware, async (req, res) => {
+app.get('/courses', authMiddleware, async (req, res) => {
   const courses = await Course.find();
   res.json(courses);
 });
 
-app.get('/api/courses/:id', authMiddleware, async (req, res) => {
+app.get('/courses/:id', authMiddleware, async (req, res) => {
   const course = await Course.findById(req.params.id);
   res.json(course);
 });
 
-app.post('/api/courses', authMiddleware, adminMiddleware, async (req, res) => {
+app.post('/courses', authMiddleware, adminMiddleware, async (req, res) => {
   const course = new Course(req.body);
   await course.save();
   res.json(course);
 });
 
-app.put('/api/courses/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.put('/courses/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, returnDocument: 'after' });
     res.json(course);
@@ -134,12 +134,12 @@ app.put('/api/courses/:id', authMiddleware, adminMiddleware, async (req, res) =>
   }
 });
 
-app.delete('/api/courses/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.delete('/courses/:id', authMiddleware, adminMiddleware, async (req, res) => {
   await Course.findByIdAndDelete(req.params.id);
   res.json({ message: 'Deleted' });
 });
 
-app.post('/api/upload', authMiddleware, adminMiddleware, upload.single('image'), async (req, res) => {
+app.post('/upload', authMiddleware, adminMiddleware, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -161,7 +161,7 @@ app.post('/api/upload', authMiddleware, adminMiddleware, upload.single('image'),
   }
 });
 
-app.delete('/api/delete-image', authMiddleware, adminMiddleware, async (req, res) => {
+app.delete('/delete-image', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { url } = req.body;
     if (!url || !url.includes('cloudinary.com')) {
@@ -179,7 +179,7 @@ app.delete('/api/delete-image', authMiddleware, adminMiddleware, async (req, res
   }
 });
 
-app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
+app.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
@@ -188,12 +188,12 @@ app.get('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-app.delete('/api/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
   res.json({ message: 'User deleted' });
 });
 
-app.post('/api/highlights', authMiddleware, async (req, res) => {
+app.post('/highlights', authMiddleware, async (req, res) => {
   try {
     const { courseId, text, startOffset, endOffset, color, field } = req.body;
     const highlight = new Highlight({
@@ -212,7 +212,7 @@ app.post('/api/highlights', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/highlights/:courseId', authMiddleware, async (req, res) => {
+app.get('/highlights/:courseId', authMiddleware, async (req, res) => {
   try {
     const highlights = await Highlight.find({
       userId: req.user.id,
@@ -224,7 +224,7 @@ app.get('/api/highlights/:courseId', authMiddleware, async (req, res) => {
   }
 });
 
-app.delete('/api/highlights/:id', authMiddleware, async (req, res) => {
+app.delete('/highlights/:id', authMiddleware, async (req, res) => {
   try {
     await Highlight.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
     res.json({ message: 'Highlight deleted' });
